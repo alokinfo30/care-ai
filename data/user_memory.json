@@ -1,0 +1,21 @@
+{
+  "dryrun-user": {
+    "user_id": "dryrun-user",
+    "daily_routine": {},
+    "preferences": {},
+    "health_history": [
+      {
+        "timestamp": "2026-07-07T16:29:21.783904",
+        "notes": "Processed sensor event"
+      }
+    ],
+    "task_history": [
+      {
+        "timestamp": "2026-07-07T16:29:21.783904",
+        "summary": "type='voice_reminder' content=\"It's time for your walk.\"",
+        "actions": null
+      }
+    ],
+    "updated_at": "2026-07-07T16:29:21.783904"
+  }
+}

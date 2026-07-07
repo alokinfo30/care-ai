@@ -21,7 +21,7 @@ reason_task:
     Based on the sensor analysis, reason about user needs:
     
     Analysis Results:
-    {{context}}
+    {analysis}
     
     User History Context:
     {history}
@@ -44,7 +44,7 @@ action_task:
     Based on the reasoning, execute appropriate actions:
     
     Reasoning Results:
-    {{context}}
+    {reasoning}
     
     Actions to consider:
     1. **voice_reminder**: A spoken reminder about a routine deviation.
@@ -65,7 +65,7 @@ context_task:
     Update user context and memory:
     
     New Data:
-    {{context}}
+    {context}
     
     User ID: {user_id}
     

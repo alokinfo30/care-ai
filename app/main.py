@@ -114,7 +114,7 @@ def process_sensor_data():
 def health_check():
     """Health check endpoint"""
     return jsonify({
-        'status': 'healthy',
+        'status': 'ok',
         'crew_available': CREW_AVAILABLE,
         'version': '1.0.0',
         'features': list(SERVICES.keys()),
