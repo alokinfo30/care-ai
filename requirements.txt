@@ -18,3 +18,4 @@ bandit
 pip-audit
 gevent
 gunicorn
+psycopg2-binary
