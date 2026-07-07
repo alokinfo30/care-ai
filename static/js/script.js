@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let debounceTimer = null;
     const DEBOUNCE_INTERVAL = 5000; // 5 seconds
 
+    // Automatic sensor simulation state
+    let sensorIntervalId = null;
+    const SENSOR_SIMULATION_INTERVAL = 15000; // 15 seconds
+
     // Service field configurations
     const serviceFieldsConfig = {
         'perceive': [
@@ -245,6 +249,13 @@ async function processRequest(data) {
             addLog('✅ Processing completed successfully!');
             if (result.result) {
                 displayResponse(result);
+                // Check for actions that need to be spoken
+                const actions = result.result.actions;
+                if (actions && actions.includes("type: 'voice_reminder'") || actions.includes("type: 'critical_alert'") || actions.includes("type: 'voice_suggestion'")) {
+                    // A simple way to extract the content to be spoken.
+                    const contentMatch = actions.match(/content: '(.*?)'/);
+                    if (contentMatch && contentMatch[1]) speak(contentMatch[1]);
+                }
             } else {
                 addLog(`Job enqueued with ID: ${result.job_id}`);
             }
@@ -325,6 +336,18 @@ async function processRequest(data) {
         return html;
     }
 
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = document.getElementById('languageSelect').value;
+            window.speechSynthesis.speak(utterance);
+            addLog(`🔊 Speaking: "${text}"`);
+        } else {
+            addLog('⚠️ Text-to-speech not supported in this browser.');
+            alert(text); // Fallback for browsers without speech synthesis
+        }
+    }
+
     // Export
     exportBtn.addEventListener('click', function() {
         const content = responseContent.textContent;
@@ -368,7 +391,47 @@ async function processRequest(data) {
         inputSection.scrollIntoView({ behavior: 'smooth' });
     });
 
+    // --- Automatic Sensor Simulation ---
+    function simulateSensorData() {
+        const activities = [
+            "Accelerometer: x=0.1, y=-0.2, z=9.8, GPS: lat=34.05, long=-118.2, Audio: 40dB, Light: 300lux. User appears to be sitting indoors.",
+            "Accelerometer: x=1.5, y=-2.3, z=8.8, GPS: lat=34.06, long=-118.2, Audio: 65dB, Light: 1500lux. User appears to be walking outside.",
+            "Accelerometer: x=0.0, y=9.8, z=0.1, GPS: lat=34.05, long=-118.2, Audio: 30dB, Light: 10lux. User appears to be lying down, likely sleeping.",
+            "Accelerometer: x=8.5, y=-10.3, z=15.8, GPS: lat=34.05, long=-118.2, Audio: 55dB, Light: 250lux. SUDDEN HIGH MOVEMENT - POSSIBLE FALL."
+        ];
+        // Pick a random activity, but favor normal ones
+        const isFall = Math.random() > 0.95; // 5% chance of a fall event
+        const data = isFall ? activities[3] : activities[Math.floor(Math.random() * 3)];
+        
+        addLog(`🤖 Auto-sensor triggered. Data: "${data.substring(0, 50)}..."`);
+        handleSensorEvent(data);
+    }
+
+    const autoSensorToggle = document.getElementById('autoSensorToggle');
+    autoSensorToggle.addEventListener('change', function() {
+        if (this.checked) {
+            if (!sensorIntervalId) {
+                addLog('🟢 Automatic sensing enabled.');
+                // Immediately trigger once, then start interval
+                simulateSensorData();
+                sensorIntervalId = setInterval(simulateSensorData, SENSOR_SIMULATION_INTERVAL);
+            }
+        } else {
+            if (sensorIntervalId) {
+                clearInterval(sensorIntervalId);
+                sensorIntervalId = null;
+                addLog('🔴 Automatic sensing disabled.');
+            }
+        }
+    });
+
     // Initialize
     loadModels();
     console.log('🤖 Smartphone Robot Assistant loaded successfully!');
+});
+
+// Add a toggle to the HTML to control the simulation
+document.addEventListener('DOMContentLoaded', () => {
+    const controls = document.querySelector('.controls');
+    controls.insertAdjacentHTML('beforeend', `<div class="toggle-switch"><input type="checkbox" id="autoSensorToggle"><label for="autoSensorToggle">Enable Auto-Sensing</label></div>`);
 });

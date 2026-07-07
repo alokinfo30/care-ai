@@ -41,16 +41,18 @@ def create_reason_task(agent, analysis: str, history: str, language: str = "en")
         {history}
         
         Determine:
-        1. What is the user doing?
-        2. What potential needs or risks exist?
-        3. What proactive actions would be helpful?
-        4. What health or safety concerns should be addressed?
-        5. What digital tasks could be automated?
+        1. What is the user's current activity and context?
+        2. Compare the current activity with the user's historical patterns for this time of day.
+        3. Is there a deviation from the user's normal routine (e.g., a delay in morning activity)?
+        4. Identify potential needs, risks, or opportunities for assistance.
+        5. If a deviation is detected, formulate a gentle, helpful reminder.
+        6. If a health or safety risk is identified (like a fall), formulate a critical alert.
+        7. Suggest one proactive action that would be helpful.
         
         Language: {language}
         """,
         expected_output="""
-        A reasoned assessment of user needs with recommended actions.
+        A reasoned assessment of the user's situation, including any detected routine deviations and specific, prioritized recommendations for actions (e.g., reminders, alerts, or suggestions).
         """,
         agent=agent
     )
@@ -65,17 +67,18 @@ def create_action_task(agent, reasoning: str, language: str = "en"):
         {reasoning}
         
         Actions to consider:
-        1. Voice responses and alerts
-        2. Notifications and reminders
-        3. Task automation (bills, bookings, emails)
-        4. Health and safety alerts
-        5. Proactive suggestions
+        1. **voice_reminder**: A spoken reminder about a routine deviation.
+        2. **critical_alert**: A spoken, urgent alert for safety issues (e.g., a fall).
+        3. **voice_suggestion**: A helpful, proactive spoken suggestion.
+        4. **notification**: A standard, non-spoken on-screen notification.
         
-        Prioritize actions based on urgency and importance.
+        Based on the reasoning, formulate the single most important action to take.
+        If the reasoning mentions a "critical alert", you MUST generate a 'critical_alert' action.
+        If it mentions a "reminder", generate a 'voice_reminder' action.
         Language: {language}
         """,
         expected_output="""
-        A list of prioritized actions to execute with execution methods.
+        A single, specific, and executable action in a structured format, including the type (e.g., 'voice_reminder') and the exact content to be spoken or displayed.
         """,
         agent=agent
     )
