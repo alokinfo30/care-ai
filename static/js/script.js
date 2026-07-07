@@ -407,14 +407,48 @@ async function processRequest(data) {
         handleSensorEvent(data);
     }
 
-    const autoSensorToggle = document.getElementById('autoSensorToggle');
-    autoSensorToggle.addEventListener('change', function() {
-        if (this.checked) {
-            if (!sensorIntervalId) {
-                addLog('🟢 Automatic sensing enabled.');
-                // Immediately trigger once, then start interval
-                simulateSensorData();
-                sensorIntervalId = setInterval(simulateSensorData, SENSOR_SIMULATION_INTERVAL);
+    function initializeAutoSensing() {
+        const controls = document.querySelector('.controls');
+        if (controls) {
+            controls.insertAdjacentHTML('beforeend', `<div class="toggle-switch"><input type="checkbox" id="autoSensorToggle"><label for="autoSensorToggle">Enable Auto-Sensing</label></div>`);
+            
+            const autoSensorToggle = document.getElementById('autoSensorToggle');
+            autoSensorToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    if (!sensorIntervalId) {
+                        addLog('🟢 Automatic sensing enabled.');
+                        // Immediately trigger once, then start interval
+                        simulateSensorData();
+                        sensorIntervalId = setInterval(simulateSensorData, SENSOR_SIMULATION_INTERVAL);
+                    }
+                } else {
+                    if (sensorIntervalId) {
+                        clearInterval(sensorIntervalId);
+                        sensorIntervalId = null;
+                        addLog('🔴 Automatic sensing disabled.');
+                    }
+                }
+            });
+        } else {
+            console.error("Could not find '.controls' element to attach the auto-sensing toggle.");
+        }
+    }
+
+    // Initialize
+    loadModels();
+    initializeAutoSensing();
+    console.log('🤖 Smartphone Robot Assistant loaded successfully!');
+});
+
+// Add a toggle to the HTML to control the simulation
+document.addEventListener('DOMContentLoaded', () => {
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        controls.insertAdjacentHTML('beforeend', `<div class="toggle-switch"><input type="checkbox" id="autoSensorToggle"><label for="autoSensorToggle">Enable Auto-Sensing</label></div>`);
+    } else {
+        console.error("Could not find '.controls' element to attach the auto-sensing toggle.");
+    }
+});
             }
         } else {
             if (sensorIntervalId) {
