@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Smartphone Robot Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <div class="brand">
+                    <span class="logo">🤖</span>
+                    <h1>Smartphone Robot</h1>
+                </div>
+                <div class="robot-badge">⚡ AI Ambient Companion</div>
+            </div>
+            <p class="subtitle">Turn your smartphone into an intelligent companion that understands, monitors, and helps</p>
+            <div class="badges">
+                <span class="badge">🤖 4 AI Agents</span>
+                <span class="badge">⚡ Multi-Model</span>
+                <span class="badge">🔄 Auto-Fallback</span>
+                <span class="badge">🌍 6+ Languages</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Model Status -->
+            <div id="modelStatus" class="model-status">
+                <h3>📊 Available AI Models</h3>
+                <div id="modelList" class="model-grid">Loading models...</div>
+            </div>
+
+            <!-- Language Selection -->
+            <section class="preferences-section">
+                <div class="pref-group">
+                    <div class="form-group">
+                        <label for="languageSelect">🌐 Language</label>
+                        <select id="languageSelect">
+                            {% for lang in languages %}
+                            <option value="{{ lang }}">{{ lang.upper() }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Service Selection -->
+            <section class="service-section">
+                <h2>🤖 Select a Service</h2>
+                <div class="service-grid" id="serviceGrid">
+                    {% for key, service in services.items() %}
+                    <div class="service-card" data-service="{{ key }}">
+                        <div class="service-icon">{{ service.icon }}</div>
+                        <h3>{{ service.name }}</h3>
+                        <p>{{ service.description }}</p>
+                        <button class="btn-service">Learn More</button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Service Input -->
+            <section class="input-section hidden" id="inputSection">
+                <h2 id="serviceTitle">Service Request</h2>
+                <form id="serviceForm">
+                    <div id="serviceFields"></div>
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        🚀 Process
+                    </button>
+                    <button type="button" class="btn-secondary" id="backBtn">← Back to Services</button>
+                </form>
+            </section>
+
+            <!-- Processing -->
+            <div id="processing" class="processing hidden">
+                <div class="spinner"></div>
+                <h3>🔄 Processing...</h3>
+                <div class="agent-status">
+                    <span id="agentStatus">⏳ AI Agent: Working...</span>
+                </div>
+                <div id="progressLog" class="progress-log"></div>
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="results hidden">
+                <div class="results-header">
+                    <h2>📋 Results</h2>
+                    <div class="results-actions">
+                        <button id="exportBtn" class="btn-secondary">📥 Export</button>
+                        <button id="copyBtn" class="btn-secondary">📋 Copy</button>
+                        <button id="newRequestBtn" class="btn-secondary">🔄 New Request</button>
+                    </div>
+                </div>
+                <div id="responseContent" class="response-content"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>🤖 Smartphone Robot - Your AI Ambient Companion</p>
+            <p class="footer-sub">Powered by CrewAI Multi-Agent System & OpenRouter</p>
+            <p class="footer-sub">Auto-fallback between OpenAI, Mistral, Llama & DeepSeek models</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
