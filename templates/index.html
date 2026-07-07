@@ -47,21 +47,6 @@
                 </div>
             </section>
 
-            <!-- Service Selection -->
-            <section class="service-section">
-                <h2>🤖 Select a Service</h2>
-                <div class="service-grid" id="serviceGrid">
-                    {% for key, service in services.items() %}
-                    <div class="service-card" data-service="{{ key }}">
-                        <div class="service-icon">{{ service.icon }}</div>
-                        <h3>{{ service.name }}</h3>
-                        <p>{{ service.description }}</p>
-                        <button class="btn-service">Learn More</button>
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-
             <!-- Service Input -->
             <section class="input-section hidden" id="inputSection">
                 <h2 id="serviceTitle">Service Request</h2>
