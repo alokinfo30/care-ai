@@ -17,5 +17,7 @@ black
 bandit
 pip-audit
 gevent
+redis
+rq
 gunicorn
 psycopg2-binary

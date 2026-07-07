@@ -75,21 +75,33 @@ def process_sensor_data():
                 'error': 'CrewAI not available',
                 'status': 'error'
             }), 500
-        
-        crew = SmartphoneRobotCrew()
-        result = crew.process_sensor_data(sensor_data, user_id, language)
-        
-        if result['status'] == 'error':
+
+        # Enqueue processing to background worker to keep API event-driven
+        try:
+            from redis import Redis
+            from rq import Queue
+            redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+            redis_conn = Redis.from_url(redis_url)
+            q = Queue('default', connection=redis_conn)
+            job = q.enqueue('app.worker.handle_sensor_job', sensor_data, user_id, language, job_timeout=900)
+
             return jsonify({
-                'error': result.get('error', 'Unknown error'),
-                'status': 'error'
-            }), 500
-        
-        return jsonify({
-            'status': 'success',
-            'result': result,
-            'timestamp': datetime.utcnow().isoformat()
-        })
+                'status': 'accepted',
+                'job_id': job.get_id(),
+                'timestamp': datetime.utcnow().isoformat()
+            }), 202
+        except Exception as e:
+            logger.error(f"Queueing failed: {e}")
+            # Fallback to synchronous processing if queueing fails
+            try:
+                crew = SmartphoneRobotCrew()
+                result = crew.process_sensor_data(sensor_data, user_id, language)
+                if result.get('status') == 'error':
+                    return jsonify({'error': result.get('error', 'Unknown error'), 'status': 'error'}), 500
+                return jsonify({'status': 'success', 'result': result, 'timestamp': datetime.utcnow().isoformat()})
+            except Exception as e2:
+                logger.error(f"Synchronous fallback failed: {e2}")
+                return jsonify({'error': str(e2), 'status': 'error'}), 500
         
     except Exception as e:
         logger.error(f"Error processing: {str(e)}")

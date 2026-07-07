@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const newRequestBtn = document.getElementById('newRequestBtn');
 
     let selectedService = null;
+    
+    // Client-side event filtering state
+    let eventQueue = [];
+    let debounceTimer = null;
+    const DEBOUNCE_INTERVAL = 5000; // 5 seconds
 
     // Service field configurations
     const serviceFieldsConfig = {
@@ -155,6 +160,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 data[field.name] = value;
             }
         });
+
+    // For 'perceive' service, use the event queue
+    if (selectedService === 'perceive') {
+        handleSensorEvent(data.sensor_data);
+        // Prevent form from submitting directly, handleSensorEvent will do it
+        return;
+    }
+
         
         processing.classList.remove('hidden');
         results.classList.add('hidden');
@@ -163,46 +176,90 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.textContent = 'Processing...';
         agentStatus.textContent = '⏳ AI Agent: Starting...';
         
-        try {
-            agentStatus.textContent = '🤖 AI Agent: Processing...';
-            addLog('📤 Sending request to AI agents...');
-            
-            const response = await fetch('/api/process', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
+    // For other services, process immediately
+    processRequest(data);
+});
 
-            const result = await response.json();
+function handleSensorEvent(sensorData) {
+    if (!sensorData) return;
 
-            if (response.ok && result.status === 'success') {
-                agentStatus.textContent = '✅ AI Agent: Complete!';
-                addLog('✅ Processing completed successfully!');
-                displayResponse(result);
-            } else {
-                agentStatus.textContent = '❌ AI Agent: Error';
-                addLog(`❌ Error: ${result.error || 'Unknown error'}`);
-                alert(`Error: ${result.error || 'Failed to process request'}`);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            agentStatus.textContent = '❌ AI Agent: Network Error';
-            addLog(`❌ Network error: ${error.message}`);
-            alert('Error processing request. Please try again.');
-        } finally {
-            processing.classList.add('hidden');
-            submitBtn.disabled = false;
-            submitBtn.textContent = '🚀 Process';
+    addLog(`📥 Event received. Queued for batching.`);
+    eventQueue.push(sensorData);
+
+    // Reset the debounce timer
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        if (eventQueue.length > 0) {
+            addLog(`⏳ Debounce timer expired. Sending batch of ${eventQueue.length} events.`);
+            const batchedData = eventQueue.join('\n');
+            eventQueue = []; // Clear the queue
+
+            const data = {
+                service_type: 'perceive',
+                language: document.getElementById('languageSelect').value,
+                user_id: 'user_123', // This should be a persistent user ID
+                sensor_data: batchedData
+            };
+            processRequest(data);
         }
-    });
+    }, DEBOUNCE_INTERVAL);
+}
+
+async function processRequest(data) {
+    processing.classList.remove('hidden');
+    results.classList.add('hidden');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+    agentStatus.textContent = '⏳ AI Agent: Starting...';
+    
+    try {
+        agentStatus.textContent = '🤖 AI Agent: Processing...';
+        addLog('📤 Sending request to AI agents...');
+        
+        const response = await fetch('/api/process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        displayApiResponse(response, result);
+
+    } catch (error) {
+        handleApiError(error);
+    } finally {
+        resetUI();
+    }
+}
 
     function addLog(message) {
         const logEntry = document.createElement('div');
         logEntry.textContent = `🔄 ${new Date().toLocaleTimeString()}: ${message}`;
         progressLog.appendChild(logEntry);
         progressLog.scrollTop = progressLog.scrollHeight;
+    }
+
+    function displayApiResponse(response, result) {
+        if (response.ok && (result.status === 'success' || result.status === 'accepted')) {
+            agentStatus.textContent = '✅ AI Agent: Complete!';
+            addLog('✅ Processing completed successfully!');
+            if (result.result) {
+                displayResponse(result);
+            } else {
+                addLog(`Job enqueued with ID: ${result.job_id}`);
+            }
+        } else {
+            agentStatus.textContent = '❌ AI Agent: Error';
+            addLog(`❌ Error: ${result.error || 'Unknown error'}`);
+            alert(`Error: ${result.error || 'Failed to process request'}`);
+        }
+    }
+
+    function handleApiError(error) {
+        console.error('Error:', error);
+        agentStatus.textContent = '❌ AI Agent: Network Error';
+        addLog(`❌ Network error: ${error.message}`);
+        alert('Error processing request. Please try again.');
     }
 
     function displayResponse(result) {
@@ -241,6 +298,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         responseContent.innerHTML = html;
         results.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetUI() {
+        processing.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🚀 Process';
     }
 
     function formatContent(text) {

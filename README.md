@@ -131,6 +131,15 @@ python run.py
 # http://localhost:5000
 
 
+
+
+Start Redis (platform-specific). Example: redis-server
+Start an RQ worker:
+rq worker default --url redis://localhost:6379/0
+Start the web app (as you already run):
+gunicorn --workers 1 -k gevent --timeout 120 --access-logfile - --error-logfile - --bind 0.0.0.0:$PORT run:app
+
+
 ✅ Features:
 
 
