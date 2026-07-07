@@ -6,6 +6,3 @@ crewai-tools
 openai
 langchain-openai
 pydantic
-
-# Pin tiktoken to a version with pre-compiled wheels to avoid build errors
-tiktoken==0.5.2
