@@ -16,4 +16,5 @@ flake8
 black
 bandit
 pip-audit
+gevent
 gunicorn
