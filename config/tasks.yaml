@@ -23,7 +23,7 @@ reason_task:
     Analysis Results:
     {{context}}
     
-    User History:
+    User History Context:
     {history}
     
     Determine:

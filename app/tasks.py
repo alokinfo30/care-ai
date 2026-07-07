@@ -52,7 +52,7 @@ def create_reason_task(agent, history: str, language: str = "en"):
     if not config:
         raise ValueError("Configuration for 'reason_task' not found in tasks.yaml")
     return Task(
-        description=config.get('description', '').format(history=history, language=language),
+        description=config.get('description', '').format(language=language, history=history),
         expected_output=config.get('expected_output', ''),
         agent=agent
     )
