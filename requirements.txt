@@ -8,7 +8,7 @@ langchain-openai
 pydantic
 
 # Pin tiktoken to a version with pre-compiled wheels to avoid build errors
-tiktoken==0.5.2
+tiktoken==0.13.0
 
 # Testing and Code Quality
 pytest
