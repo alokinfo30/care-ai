@@ -1,40 +1,10 @@
 # care-ai
-AI-Powered Smartphone-as-a-Robotic Care
 
-AI-powered "Smartphone-as-a-Robot" system that turns any smartphone into an intelligent ambient companion using CrewAI and OpenRouter.
+An AI-powered system that turns any smartphone into an intelligent ambient companion for proactive care using CrewAI and OpenRouter.
 
-SmartphoneRobot/
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── model_manager.py
-│   ├── agents.py
-│   ├── tasks.py
-│   ├── crew.py
-│   ├── models.py
-│   └── utils.py
-├── config/
-│   ├── agents.yaml
-│   └── tasks.yaml
-├── templates/
-│   └── index.html
-├── static/
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       └── script.js
-├── data/
-│   └── .gitkeep
-├── .env
-├── .gitignore
-├── requirements.txt
-├── run.py
-└── README.md
+# 🤖 Care AI - Your Ambient Companion
 
-
-# 🤖 Smartphone Robot - AI Ambient Companion
-
-Turn your smartphone into an intelligent companion that understands, monitors, and helps you in daily life.
+Turn your smartphone into an intelligent companion that understands your context, monitors for risks, and provides proactive assistance.
 
 ## Features
 
@@ -43,6 +13,10 @@ Turn your smartphone into an intelligent companion that understands, monitors, a
 - ⚡ **Smart Actions**: Automate digital tasks and provide proactive assistance
 - ❤️ **Health Monitoring**: Detect falls, monitor activity, and alert caregivers
 - 🌍 **Multi-Language Support**: 6+ languages available
+- 🔄 **Automatic Model Fallback**: Ensures reliability by switching between multiple LLMs.
+- 🔊 **Text-to-Speech**: Provides voice-based reminders and alerts.
+- 🔋 **Efficient Event Handling**: Uses client-side and server-side debouncing to conserve battery life.
+- 🐳 **Containerized**: Ready for deployment with Docker.
 
 ## Architecture
 
@@ -70,83 +44,105 @@ Turn your smartphone into an intelligent companion that understands, monitors, a
 | `meta-llama/llama-3.1-8b-instruct` | Meta | Action Execution |
 | `deepseek/deepseek-chat` | DeepSeek | Context Memory |
 
-## Installation
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.10+
+- An OpenRouter API Key
+- Redis (for production mode)
+
+### Installation & Setup
 
 ```bash
 # 1. Clone the repository
-git clone <repository-url>
-cd SmartphoneRobot
+git clone https://github.com/your-username/care-ai.git
+cd care-ai
 
-# 2. Create virtual environment
+# 2. Create and activate a virtual environment
 python -m venv venv
+# On macOS/Linux:
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Create .env file with your OpenRouter API key
-# (see .env.example for template)
+# 4. Create a .env file from the example
+cp .env.example .env
 
-# 5. Run the application
+# 5. Add your OpenRouter API key to the .env file
+# OPENROUTER_API_KEY="sk-or-..."
+```
+
+### Running the Application
+
+#### Development Mode
+
+This mode is suitable for local development and testing.
+
+```bash
+# Run the Flask application
 python run.py
+```
+Now, open your browser and navigate to `http://localhost:5000`.
 
+#### Production Mode (with Redis & RQ)
 
+This mode uses `gunicorn` for the web server and `rq` with `redis` for background job processing, which is recommended for production deployments.
 
-Configuration
-Environment Variables
-Variable	Description
-OPENROUTER_API_KEY	Your OpenRouter API key
-OPENROUTER_PRIMARY_MODEL	Primary model to use
-OPENROUTER_FALLBACK_MODELS	Fallback models
-SUPPORTED_LANGUAGES	Comma-separated language codes
-API Endpoints
-Endpoint	Method	Description
-/	GET	Web interface
-/api/process	POST	Process sensor data
-/api/models	GET	List available models
-/api/health	GET	Health check
+```bash
+# 1. Start your Redis server (platform-specific)
+redis-server
 
-
-
-
-
-## Step 19: Final Commands
-
-```powershell
-# 1. Create virtual environment
-python -m venv venv
-
-# 2. Activate it
-venv\Scripts\Activate.ps1
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Add your OpenRouter API key to .env
-
-# 5. Run the application
-python run.py
-
-# 6. Open browser
-# http://localhost:5000
-
-
-
-
-Start Redis (platform-specific). Example: redis-server
-Start an RQ worker:
+# 2. In a new terminal, start the RQ worker
 rq worker default --url redis://localhost:6379/0
-Start the web app (as you already run):
-gunicorn --workers 1 -k gevent --timeout 120 --access-logfile - --error-logfile - --bind 0.0.0.0:$PORT run:app
 
+# 3. In another terminal, start the Gunicorn web server
+gunicorn --workers 1 -k gevent --timeout 120 --bind 0.0.0.0:5000 run:app
+```
 
-✅ Features:
+## ⚙️ Configuration
 
+The application can be configured via environment variables in the `.env` file.
 
-4 Specialized AI Agents for perception, reasoning, action, and context
-6+ Languages support
-Sensor Analysis from accelerometer, gyroscope, GPS, and more
-Health Monitoring with fall detection and activity tracking
-Task Automation for digital tasks
-Auto-Fallback between 4 models
-Responsive Design for mobile and desktop
+| Variable                   | Description                                             | Default                        |
+| -------------------------- | ------------------------------------------------------- | ------------------------------ |
+| `OPENROUTER_API_KEY`       | **Required.** Your OpenRouter API key.                  | `""`                           |
+| `OPENROUTER_PRIMARY_MODEL` | The main model for processing.                          | `openai/gpt-4o-mini`           |
+| `OPENROUTER_FALLBACK_MODELS`| Comma-separated list of fallback models.                | `""`                           |
+| `SUPPORTED_LANGUAGES`      | Comma-separated list of supported language codes.       | `en,hi,es,fr,de,zh`            |
+| `REDIS_URL`                | The connection URL for your Redis instance.             | `redis://localhost:6379/0`     |
+| `DEBOUNCE_SECS`            | Server-side debounce interval in seconds for sensor jobs. | `5`                            |
+
+## 🧪 Running Tests
+
+The project uses `pytest` for testing. Ensure your `OPENROUTER_API_KEY` is set in the environment.
+
+```bash
+pytest
+```
+
+## 🐳 Docker
+
+You can build and run the application using Docker.
+
+```bash
+# 1. Build the Docker image
+docker build -t care-ai .
+
+# 2. Run the container (don't forget to pass the API key)
+docker run -p 5000:5000 -e OPENROUTER_API_KEY="your_api_key" care-ai
+```
+
+## 🌐 API Endpoints
+
+| Endpoint      | Method | Description                               |
+| ------------- | ------ | ----------------------------------------- |
+| `/`           | `GET`  | Renders the main web interface.           |
+| `/api/process`| `POST` | Processes sensor data via background job. |
+| `/api/models` | `GET`  | Lists available and tested AI models.     |
+| `/api/health` | `GET`  | Provides a health check of the service.   |
+
+---
+
+*This project is a demonstration of building a proactive, multi-agent AI system.*

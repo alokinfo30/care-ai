@@ -1,6 +1,5 @@
-# config/tasks.yaml
-perceive_environment:
-  description: |
+perceive_task:
+  description: >
     Analyze the following smartphone sensor data:
     
     Sensor Data:
@@ -14,58 +13,59 @@ perceive_environment:
     5. Health indicators (steps, activity duration, posture)
     
     Language: {language}
-  expected_output: |
-    A comprehensive analysis of user context and activity.
-  agent: perception_agent
+  expected_output: >
+    A comprehensive analysis of user context and activity with clear classification.
 
-reason_context:
-  description: |
+reason_task:
+  description: >
     Based on the sensor analysis, reason about user needs:
     
     Analysis Results:
-    {analysis}
+    {{context}}
     
     User History:
     {history}
     
     Determine:
-    1. What is the user doing?
-    2. What potential needs or risks exist?
-    3. What proactive actions would be helpful?
-    4. What health or safety concerns should be addressed?
-    5. What digital tasks could be automated?
+    1. What is the user's current activity and context?
+    2. Compare the current activity with the user's historical patterns for this time of day.
+    3. Is there a deviation from the user's normal routine (e.g., a delay in morning activity)?
+    4. Identify potential needs, risks, or opportunities for assistance.
+    5. If a deviation is detected, formulate a gentle, helpful reminder.
+    6. If a health or safety risk is identified (like a fall), formulate a critical alert.
+    7. Suggest one proactive action that would be helpful.
     
     Language: {language}
-  expected_output: |
-    A reasoned assessment of user needs and recommended actions.
-  agent: reasoning_agent
+  expected_output: >
+    A reasoned assessment of the user's situation, including any detected routine deviations and specific, prioritized recommendations for actions (e.g., reminders, alerts, or suggestions).
 
-execute_action:
-  description: |
+action_task:
+  description: >
     Based on the reasoning, execute appropriate actions:
     
     Reasoning Results:
-    {reasoning}
+    {{context}}
     
     Actions to consider:
-    1. Voice responses and alerts
-    2. Notifications and reminders
-    3. Task automation (bills, bookings, emails)
-    4. Health and safety alerts
-    5. Proactive suggestions
+    1. **voice_reminder**: A spoken reminder about a routine deviation.
+    2. **critical_alert**: A spoken, urgent alert for safety issues (e.g., a fall).
+    3. **voice_suggestion**: A helpful, proactive spoken suggestion.
+    4. **notification**: A standard, non-spoken on-screen notification.
     
-    Prioritize actions based on urgency and importance.
+    Based on the reasoning, formulate the single most important action to take.
+    If the reasoning mentions a "critical alert", you MUST generate a 'critical_alert' action.
+    If it mentions a "reminder", generate a 'voice_reminder' action.
     Language: {language}
-  expected_output: |
-    A list of actions to execute with their priority and method.
-  agent: action_agent
+  expected_output: >
+    A single, specific, and executable action in a JSON object format.
+    Example: {"type": "voice_reminder", "content": "It's about time for your morning walk."}
 
-manage_context:
-  description: |
+context_task:
+  description: >
     Update user context and memory:
     
     New Data:
-    {new_data}
+    {{context}}
     
     User ID: {user_id}
     
@@ -77,6 +77,5 @@ manage_context:
     5. Long-term memory
     
     Language: {language}
-  expected_output: |
-    Updated context store with new information.
-  agent: context_agent
+  expected_output: >
+    Updated context store with new information and insights.

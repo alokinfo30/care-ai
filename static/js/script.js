@@ -249,12 +249,16 @@ async function processRequest(data) {
             addLog('✅ Processing completed successfully!');
             if (result.result) {
                 displayResponse(result);
-                // Check for actions that need to be spoken
-                const actions = result.result.actions;
-                if (actions && actions.includes("type: 'voice_reminder'") || actions.includes("type: 'critical_alert'") || actions.includes("type: 'voice_suggestion'")) {
-                    // A simple way to extract the content to be spoken.
-                    const contentMatch = actions.match(/content: '(.*?)'/);
-                    if (contentMatch && contentMatch[1]) speak(contentMatch[1]);
+                // Securely parse and handle structured actions
+                try {
+                    const actions = JSON.parse(result.result.actions);
+                    if (actions && actions.content) {
+                        if (actions.type === 'voice_reminder' || actions.type === 'critical_alert' || actions.type === 'voice_suggestion') {
+                            speak(actions.content);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Could not parse actions JSON:", e);
                 }
             } else {
                 addLog(`Job enqueued with ID: ${result.job_id}`);
@@ -274,40 +278,51 @@ async function processRequest(data) {
     }
 
     function displayResponse(result) {
+        responseContent.innerHTML = ''; // Clear previous results
         results.classList.remove('hidden');
         
-        let html = '';
         const responseData = result.result;
         
         if (responseData) {
-            html += `<h2>📋 Processing Results</h2>`;
-            html += `<p><strong>User ID:</strong> ${responseData.user_id || 'N/A'}</p>`;
-            html += `<p><strong>Status:</strong> ${responseData.status || 'N/A'}</p>`;
-            html += `<p><strong>Timestamp:</strong> ${new Date(responseData.timestamp).toLocaleString()}</p>`;
-            html += `<hr>`;
-            
-            if (responseData.perception) {
-                html += `<h3>📱 Perception Analysis</h3>`;
-                html += `<div>${formatContent(responseData.perception)}</div>`;
-            }
-            
-            if (responseData.reasoning) {
-                html += `<h3>🧠 Reasoning</h3>`;
-                html += `<div>${formatContent(responseData.reasoning)}</div>`;
-            }
-            
-            if (responseData.actions) {
-                html += `<h3>⚡ Actions</h3>`;
-                html += `<div>${formatContent(responseData.actions)}</div>`;
-            }
-            
-            if (responseData.context) {
-                html += `<h3>📊 Context Update</h3>`;
-                html += `<div>${formatContent(responseData.context)}</div>`;
-            }
+            const createHeader = (text) => {
+                const h2 = document.createElement('h2');
+                h2.textContent = text;
+                return h2;
+            };
+            const createParagraph = (html) => {
+                const p = document.createElement('p');
+                p.innerHTML = html; // Use innerHTML only for trusted, simple HTML like <strong>
+                return p;
+            };
+            const createSection = (title, content) => {
+                if (!content) return null;
+                const section = document.createDocumentFragment();
+                const h3 = document.createElement('h3');
+                h3.textContent = title;
+                section.appendChild(h3);
+                section.appendChild(formatContent(content));
+                return section;
+            };
+
+            responseContent.appendChild(createHeader('📋 Processing Results'));
+            responseContent.appendChild(createParagraph(`<strong>User ID:</strong> ${responseData.user_id || 'N/A'}`));
+            responseContent.appendChild(createParagraph(`<strong>Status:</strong> ${responseData.status || 'N/A'}`));
+            responseContent.appendChild(createParagraph(`<strong>Timestamp:</strong> ${new Date(responseData.timestamp).toLocaleString()}`));
+            responseContent.appendChild(document.createElement('hr'));
+
+            const perceptionSection = createSection('📱 Perception Analysis', responseData.perception);
+            if (perceptionSection) responseContent.appendChild(perceptionSection);
+
+            const reasoningSection = createSection('🧠 Reasoning', responseData.reasoning);
+            if (reasoningSection) responseContent.appendChild(reasoningSection);
+
+            const actionsSection = createSection('⚡ Actions', responseData.actions);
+            if (actionsSection) responseContent.appendChild(actionsSection);
+
+            const contextSection = createSection('📊 Context Update', responseData.context);
+            if (contextSection) responseContent.appendChild(contextSection);
         }
         
-        responseContent.innerHTML = html;
         results.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -318,22 +333,9 @@ async function processRequest(data) {
     }
 
     function formatContent(text) {
-        if (!text) return '';
-        
-        let html = text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-            .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
-            .replace(/^\* (.*$)/gm, '<li>$1</li>')
-            .replace(/^- (.*$)/gm, '<li>$1</li>')
-            .replace(/\n/g, '<br>');
-        
-        html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-        
-        return html;
+        const contentDiv = document.createElement('div');
+        contentDiv.textContent = text; // Safely set the text content
+        return contentDiv;
     }
 
     function speak(text) {
@@ -437,35 +439,5 @@ async function processRequest(data) {
     // Initialize
     loadModels();
     initializeAutoSensing();
-    console.log('🤖 Smartphone Robot Assistant loaded successfully!');
-});
-
-// Add a toggle to the HTML to control the simulation
-document.addEventListener('DOMContentLoaded', () => {
-    const controls = document.querySelector('.controls');
-    if (controls) {
-        controls.insertAdjacentHTML('beforeend', `<div class="toggle-switch"><input type="checkbox" id="autoSensorToggle"><label for="autoSensorToggle">Enable Auto-Sensing</label></div>`);
-    } else {
-        console.error("Could not find '.controls' element to attach the auto-sensing toggle.");
-    }
-});
-            }
-        } else {
-            if (sensorIntervalId) {
-                clearInterval(sensorIntervalId);
-                sensorIntervalId = null;
-                addLog('🔴 Automatic sensing disabled.');
-            }
-        }
-    });
-
-    // Initialize
-    loadModels();
-    console.log('🤖 Smartphone Robot Assistant loaded successfully!');
-});
-
-// Add a toggle to the HTML to control the simulation
-document.addEventListener('DOMContentLoaded', () => {
-    const controls = document.querySelector('.controls');
-    controls.insertAdjacentHTML('beforeend', `<div class="toggle-switch"><input type="checkbox" id="autoSensorToggle"><label for="autoSensorToggle">Enable Auto-Sensing</label></div>`);
+    console.log('🤖 Care AI Assistant loaded successfully!');
 });

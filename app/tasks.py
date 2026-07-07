@@ -1,110 +1,83 @@
 # app/tasks.py
 from crewai import Task
+from app.models import AgentAction
+import yaml
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
+# Cache for task prompts to avoid repeated file I/O
+_tasks_config_cache = None
+_tasks_config_mtime = 0
+
+def _load_task_prompts():
+    """Load task prompts from the YAML config file, with caching."""
+    global _tasks_config_cache, _tasks_config_mtime
+
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'tasks.yaml')
+    try:
+        mtime = os.path.getmtime(config_path)
+        # If file has been modified since last load, or cache is empty, reload.
+        if mtime > _tasks_config_mtime or _tasks_config_cache is None:
+            logger.info(f"Reloading tasks configuration from {config_path}.")
+            with open(config_path, 'r') as file:
+                _tasks_config_cache = yaml.safe_load(file)
+            _tasks_config_mtime = mtime
+
+        if _tasks_config_cache is None:
+             raise ValueError("Task configuration cache is empty after attempting to load.")
+
+        return _tasks_config_cache
+    except (FileNotFoundError, yaml.YAMLError, ValueError) as e:
+        logger.error(f"Failed to load or parse task config file at {config_path}: {e}")
+        raise ValueError(f"Could not load tasks configuration from {config_path}") from e
+
 def create_perceive_task(agent, sensor_data: str, language: str = "en"):
     """Create the perception task"""
+    tasks_config = _load_task_prompts()
+    config = tasks_config.get('perceive_task')
+    if not config:
+        raise ValueError("Configuration for 'perceive_task' not found in tasks.yaml")
     return Task(
-        description=f"""
-        Analyze the following smartphone sensor data:
-        
-        Sensor Data:
-        {sensor_data}
-        
-        Analyze:
-        1. User activity (walking, driving, sitting, sleeping)
-        2. Location context (home, office, outdoors, vehicle)
-        3. Time context (morning, afternoon, evening, night)
-        4. Environmental factors (noise level, light level)
-        5. Health indicators (steps, activity duration, posture)
-        
-        Language: {language}
-        """,
-        expected_output="""
-        A comprehensive analysis of user context and activity with clear classification.
-        """,
+        description=config.get('description', '').format(sensor_data=sensor_data, language=language),
+        expected_output=config.get('expected_output', ''),
         agent=agent
     )
 
-def create_reason_task(agent, analysis: str, history: str, language: str = "en"):
+def create_reason_task(agent, history: str, language: str = "en"):
     """Create the reasoning task"""
+    tasks_config = _load_task_prompts()
+    config = tasks_config.get('reason_task')
+    if not config:
+        raise ValueError("Configuration for 'reason_task' not found in tasks.yaml")
     return Task(
-        description=f"""
-        Based on the sensor analysis, reason about user needs:
-        
-        Analysis Results:
-        {analysis}
-        
-        User History:
-        {history}
-        
-        Determine:
-        1. What is the user's current activity and context?
-        2. Compare the current activity with the user's historical patterns for this time of day.
-        3. Is there a deviation from the user's normal routine (e.g., a delay in morning activity)?
-        4. Identify potential needs, risks, or opportunities for assistance.
-        5. If a deviation is detected, formulate a gentle, helpful reminder.
-        6. If a health or safety risk is identified (like a fall), formulate a critical alert.
-        7. Suggest one proactive action that would be helpful.
-        
-        Language: {language}
-        """,
-        expected_output="""
-        A reasoned assessment of the user's situation, including any detected routine deviations and specific, prioritized recommendations for actions (e.g., reminders, alerts, or suggestions).
-        """,
+        description=config.get('description', '').format(history=history, language=language),
+        expected_output=config.get('expected_output', ''),
         agent=agent
     )
 
-def create_action_task(agent, reasoning: str, language: str = "en"):
+def create_action_task(agent, language: str = "en"):
     """Create the action task"""
+    tasks_config = _load_task_prompts()
+    config = tasks_config.get('action_task')
+    if not config:
+        raise ValueError("Configuration for 'action_task' not found in tasks.yaml")
     return Task(
-        description=f"""
-        Based on the reasoning, execute appropriate actions:
-        
-        Reasoning Results:
-        {reasoning}
-        
-        Actions to consider:
-        1. **voice_reminder**: A spoken reminder about a routine deviation.
-        2. **critical_alert**: A spoken, urgent alert for safety issues (e.g., a fall).
-        3. **voice_suggestion**: A helpful, proactive spoken suggestion.
-        4. **notification**: A standard, non-spoken on-screen notification.
-        
-        Based on the reasoning, formulate the single most important action to take.
-        If the reasoning mentions a "critical alert", you MUST generate a 'critical_alert' action.
-        If it mentions a "reminder", generate a 'voice_reminder' action.
-        Language: {language}
-        """,
-        expected_output="""
-        A single, specific, and executable action in a structured format, including the type (e.g., 'voice_reminder') and the exact content to be spoken or displayed.
-        """,
-        agent=agent
+        description=config.get('description', '').format(language=language),
+        expected_output=config.get('expected_output', ''),
+        agent=agent,
+        output_pydantic=AgentAction
     )
 
-def create_context_task(agent, new_data: str, user_id: str, language: str = "en"):
+def create_context_task(agent, user_id: str, language: str = "en"):
     """Create the context management task"""
+    tasks_config = _load_task_prompts()
+    config = tasks_config.get('context_task')
+    if not config:
+        raise ValueError("Configuration for 'context_task' not found in tasks.yaml")
     return Task(
-        description=f"""
-        Update user context and memory:
-        
-        New Data:
-        {new_data}
-        
-        User ID: {user_id}
-        
-        Update:
-        1. Activity history
-        2. Health metrics
-        3. Task completion status
-        4. Preferences and patterns
-        5. Long-term memory
-        
-        Language: {language}
-        """,
-        expected_output="""
-        Updated context store with new information and insights.
-        """,
+        description=config.get('description', '').format(user_id=user_id, language=language),
+        expected_output=config.get('expected_output', ''),
         agent=agent
     )

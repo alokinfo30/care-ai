@@ -21,3 +21,4 @@ redis
 rq
 gunicorn
 psycopg2-binary
+pyyaml

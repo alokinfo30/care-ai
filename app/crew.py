@@ -4,6 +4,7 @@ import os
 import logging
 from typing import Dict, List, Optional
 from app.model_manager import model_manager
+from app.models import AgentAction
 import uuid
 from datetime import datetime
 
@@ -50,52 +51,43 @@ class SmartphoneRobotCrew:
         """Process sensor data and generate actions"""
         try:
             logger.info(f"📱 Processing sensor data for user {user_id}")
-            
-            # Step 1: Perception
+
+            # 1. Create Agents
             perception_agent = self.create_perception_agent()
-            perceive_task = self.create_perceive_task(perception_agent, sensor_data, language)
-            perceive_crew = Crew(agents=[perception_agent], tasks=[perceive_task], verbose=self.verbose)
-            perception_result = perceive_crew.kickoff(inputs={
-                "sensor_data": sensor_data,
-                "language": language
-            })
-            
-            # Step 2: Reasoning
             reasoning_agent = self.create_reasoning_agent()
-            reason_task = self.create_reason_task(reasoning_agent, str(perception_result), "User history", language)
-            reason_crew = Crew(agents=[reasoning_agent], tasks=[reason_task], verbose=self.verbose)
-            reasoning_result = reason_crew.kickoff(inputs={
-                "analysis": str(perception_result),
-                "history": "User history",
-                "language": language
-            })
-            
-            # Step 3: Action
             action_agent = self.create_action_agent()
-            action_task = self.create_action_task(action_agent, str(reasoning_result), language)
-            action_crew = Crew(agents=[action_agent], tasks=[action_task], verbose=self.verbose)
-            action_result = action_crew.kickoff(inputs={
-                "reasoning": str(reasoning_result),
-                "language": language
-            })
-            
-            # Step 4: Context Update
             context_agent = self.create_context_agent()
-            context_task = self.create_context_task(context_agent, str(action_result), user_id, language)
-            context_crew = Crew(agents=[context_agent], tasks=[context_task], verbose=self.verbose)
-            context_result = context_crew.kickoff(inputs={
-                "new_data": str(action_result),
-                "user_id": user_id,
-                "language": language
-            })
-            
+
+            # 2. Create Tasks
+            perceive_task = self.create_perceive_task(perception_agent, sensor_data, language)
+            reason_task = self.create_reason_task(reasoning_agent, "User history", language)
+            action_task = self.create_action_task(action_agent, language)
+            context_task = self.create_context_task(context_agent, user_id, language)
+
+            # 3. Create a single Crew to run the sequential process
+            crew = Crew(
+                agents=[perception_agent, reasoning_agent, action_agent, context_agent],
+                tasks=[perceive_task, reason_task, action_task, context_task],
+                verbose=self.verbose
+            )
+
+            # 4. Kick off the crew. The output of the last task is returned.
+            crew.kickoff()
+
+            # 5. Correctly serialize the Pydantic output from the action_task
+            action_output = action_task.output
+            if isinstance(action_output, AgentAction):
+                action_json_str = action_output.model_dump_json()
+            else:
+                action_json_str = str(action_output)
+
             return {
                 "status": "success",
                 "user_id": user_id,
-                "perception": str(perception_result),
-                "reasoning": str(reasoning_result),
-                "actions": str(action_result),
-                "context": str(context_result),
+                "perception": str(perceive_task.output),
+                "reasoning": str(reason_task.output),
+                "actions": action_json_str,
+                "context": str(context_task.output),
                 "timestamp": datetime.now().isoformat()
             }
             

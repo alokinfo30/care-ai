@@ -14,7 +14,7 @@ if __name__ == '__main__':
     debug = os.getenv('FLASK_ENV', 'development') == 'development'
     
     print("=" * 70)
-    print("🤖 Smartphone Robot - AI Ambient Companion")
+    print("🤖 Care AI - Your Ambient Companion")
     print("=" * 70)
     print(f"🚀 Server running at: http://localhost:{port}")
     print(f"📱 Open in your browser")
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     print("🌍 Supported Languages:")
     print("  English, Hindi, Spanish, French, German, Chinese")
     print("=" * 70)
-    print("🤖 Turning Smartphones into Intelligent Companions")
+    print("🤖 Turning Smartphones into Proactive Care Companions")
     print("=" * 70)
     
     app.run(host='0.0.0.0', port=port, debug=debug)

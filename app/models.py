@@ -23,6 +23,12 @@ class SensorData(BaseModel):
     light_level: float = Field(..., description="Ambient light level")
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
+class AgentAction(BaseModel):
+    """A simple action to be executed, as determined by an AI agent."""
+    type: str = Field(..., description="The type of action, e.g., 'voice_reminder', 'critical_alert'.")
+    content: str = Field(..., description="The content for the action, e.g., the text to be spoken.")
+
+
 class UserContext(BaseModel):
     """User context and activity"""
     user_id: str = Field(..., description="User identifier")

@@ -23,4 +23,4 @@ def test_index(client):
     """Test the web interface."""
     response = client.get('/')
     assert response.status_code == 200
-    assert b"Smartphone Robot" in response.data
+    assert b"Care AI" in response.data
