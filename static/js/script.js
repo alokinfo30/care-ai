@@ -296,8 +296,26 @@ async function processRequest(data) {
         }
     }
 
+    function initializeLanguage() {
+        const languageSelect = document.getElementById('languageSelect');
+        if (!languageSelect) return;
+
+        // Get browser language, take the primary part (e.g., 'en' from 'en-US')
+        const userLang = navigator.language.split('-')[0];
+
+        // Check if the detected language is one of the options in the dropdown
+        const langOption = languageSelect.querySelector(`option[value="${userLang}"]`);
+        if (langOption) {
+            languageSelect.value = userLang;
+            addLog(`🌐 Language automatically set to ${userLang.toUpperCase()}.`);
+        } else {
+            addLog(`⚠️ Browser language '${userLang}' not supported. Defaulting to ${languageSelect.value.toUpperCase()}.`);
+        }
+    }
+
     // Initialize
     loadModels();
     initializeAutoSensing();
+    initializeLanguage();
     console.log('🤖 Care AI Assistant loaded successfully!');
 });
