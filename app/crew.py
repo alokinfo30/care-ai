@@ -76,7 +76,7 @@ class SmartphoneRobotCrew:
             perception_agent = self.create_perception_agent()
             perceive_task = self.create_perceive_task(perception_agent, sensor_data, language)
             perception_crew = Crew(agents=[perception_agent], tasks=[perceive_task], verbose=self.verbose)
-            perception_result = perception_crew.kickoff(inputs={
+            perception_result = perception_crew.kickoff({
                 "sensor_data": sensor_data,
                 "language": language,
             })
@@ -85,7 +85,7 @@ class SmartphoneRobotCrew:
             reasoning_agent = self.create_reasoning_agent()
             reason_task = self.create_reason_task(reasoning_agent, perception_text, user_history, language)
             reasoning_crew = Crew(agents=[reasoning_agent], tasks=[reason_task], verbose=self.verbose)
-            reasoning_result = reasoning_crew.kickoff(inputs={
+            reasoning_result = reasoning_crew.kickoff({
                 "analysis": perception_text,
                 "history": user_history,
                 "language": language,
@@ -95,7 +95,7 @@ class SmartphoneRobotCrew:
             action_agent = self.create_action_agent()
             action_task = self.create_action_task(action_agent, reasoning_text, language)
             action_crew = Crew(agents=[action_agent], tasks=[action_task], verbose=self.verbose)
-            action_result = action_crew.kickoff(inputs={
+            action_result = action_crew.kickoff({
                 "reasoning": reasoning_text,
                 "language": language,
             })
@@ -105,7 +105,7 @@ class SmartphoneRobotCrew:
             context_agent = self.create_context_agent()
             context_task = self.create_context_task(context_agent, action_text, user_id, language)
             context_crew = Crew(agents=[context_agent], tasks=[context_task], verbose=self.verbose)
-            context_result = context_crew.kickoff(inputs={
+            context_result = context_crew.kickoff({
                 "new_data": action_text,
                 "user_id": user_id,
                 "language": language,
